@@ -1,0 +1,36 @@
+clc;
+clear all;
+close all;
+%data classification using MLP
+data=open('breastcancer.mat');
+P=data.data(:,2:10)'; %Input matrix
+T=data.data(:,11)'; %Target values
+total_benign=0;
+total_mali=0;
+for i=1:length(T)
+    if T(i)==2
+        T(i)=1; %Benign cell
+        total_benign=total_benign+1;
+    else
+        T(i)=-1; %Malignant cell
+        total_mali=total_mali+1;
+    end
+end
+cancernet=feedforwardnet(10); %Building MLP with 10 hidden neurons
+cancernet.divideParam.trainRatio = 70/100;
+cancernet.divideParam.valRatio = 15/100;
+cancernet.divideParam.testRatio = 15/100;
+cancernet=train(cancernet,P,T); %Train the NN
+output=hardlims(sim(cancernet,P));
+incorrectMalign=0; %No of benign cells incorrectly classified as “malignant”
+incorrectBenign=0; %No of malignant cells incorrectly classied as “benign”
+for i=1:length(T)
+    if T(i)==1 && output(i)==-1
+        incorrectMalign=incorrectMalign+1;
+    end
+    if T(i)==-1 && output(i)==1
+        incorrectBenign=incorrectBenign+1;
+    end
+end
+FalsePositiveRate=incorrectMalign/total_benign
+FalseNegativeRate=incorrectBenign/total_mali
